@@ -4,7 +4,8 @@ on: [push]
 
 env:
   USERS: docker.pkg.github.com/$(echo $GITHUB_REPOSITORY | tr '[A-Z]' '[a-z]')/test-driven-users:prod
-  CLIENT: docker.pkg.github.com/$(echo $GITHUB_REPOSITORY | tr '[A-Z]' '[a-z]')/test-driven-client:prod 
+  CLIENT: docker.pkg.github.com/$(echo $GITHUB_REPOSITORY | tr '[A-Z]' '[a-z]')/test-driven-client:prod
+  REACT_APP_API_SERVICE_URL: "http://localhost:5004"
 
 jobs:
   
@@ -32,7 +33,7 @@ jobs:
             --file services/client/Dockerfile.prod \
             --tag ${{ env.CLIENT }} \
             --build-arg NODE_ENV=production \
-            --build-arg REACT_APP_API_SERVICE_URL=$REACT_APP_API_SERVICE_URL \
+            --build-arg REACT_APP_API_SERVICE_URL=${{ env.REACT_APP_API_SERVICE_URL }} \
             "./services/client"
       - name: Push Images
         run: |
