@@ -1,10 +1,17 @@
 name: learn-github-actions
+
 on: [push]
+
 jobs:
-  check-bats-version:
+  
+  build:
+    name: Build Docker Images
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
-      - run: npm install -g bats
-      - run: bats -v
+      - name: Checkout master
+        uses: actions/checkout@v2.3.
+      - name: Log in to GitHub Packages
+        run: echo ${GITHUB_TOKEN} | docker login -u ${GITHUB_ACTOR} --password-stdin docker.pkg.github.com
+          env: 
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
