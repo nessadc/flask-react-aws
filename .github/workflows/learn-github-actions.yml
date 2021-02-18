@@ -22,7 +22,8 @@ jobs:
       - name: Pull Images
         run: |
           docker pull ${{ env.USERS }} || true
-          docker pull ${{ env.CLIENT }} || true
+          docker pull ${{ env.CLIENT }}:builder || true
+          docker pull ${{ env.CLIENT }}:prod || true
       - name: Build Images
         run: |
           echo "Building and testing dev images..."
@@ -36,19 +37,28 @@ jobs:
           docker-compose exec -T client npm run prettier:write
           echo "Building prod images..."
           docker build \
+            --cache-from ${{ env.USERS }} \
             --file services/users/Dockerfile.prod \
             --tag ${{ env.USERS }} \
             "./services/users"
           docker build \
+            --target builder \
+            --cache-from ${{ env.CLIENT }}:builder \
             --file services/client/Dockerfile.prod \
-            --tag ${{ env.CLIENT }} \
+            --tag ${{ env.CLIENT }}:prod \
             --build-arg NODE_ENV=production \
             --build-arg REACT_APP_API_SERVICE_URL=${{ env.REACT_APP_API_SERVICE_URL }} \
+            "./services/client"
+          docker build \
+            --cache-from ${{ env.CLIENT }}:prod \
+            --file services/client/Dockerfile.prod \
+            --tag ${{ env.CLIENT }}:prod \
             "./services/client"
       - name: Push Images
         run: |
           echo "Pushing prod images to GitHub Packages..."
           docker push ${{ env.USERS }}
-          docker push ${{ env.CLIENT }}
+          docker push ${{ env.CLIENT }}:builder
+          docker push ${{ env.CLIENT }}:prod
 
 
