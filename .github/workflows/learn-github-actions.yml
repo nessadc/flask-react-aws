@@ -25,6 +25,16 @@ jobs:
           docker pull ${{ env.CLIENT }} || true
       - name: Build Images
         run: |
+          echo "Building and testing dev images..."
+          docker-compose up --detach --build
+          docker-compose exec -T api python -m pytest "src/tests" -p no:warnings --cov="src"
+          docker-compose exec -T api flake8 src
+          docker-compose exec -T api black src --check
+          docker-compose exec -T api isort src --check-only
+          docker-compose exec -T client npm run lint
+          docker-compose exec -T client npm run prettier:check
+          docker-compose exec -T client npm run prettier:write
+          echo "Building prod images..."
           docker build \
             --file services/users/Dockerfile.prod \
             --tag ${{ env.USERS }} \
@@ -37,6 +47,7 @@ jobs:
             "./services/client"
       - name: Push Images
         run: |
+          echo "Pushing prod images to GitHub Packages..."
           docker push ${{ env.USERS }}
           docker push ${{ env.CLIENT }}
 
