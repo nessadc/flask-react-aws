@@ -4,7 +4,7 @@ on: [push]
 
 env:
   USERS: docker.pkg.github.com/$(echo $GITHUB_REPOSITORY | tr '[A-Z]' '[a-z]')/test-driven-users:prod
-  CLIENT: docker.pkg.github.com/$(echo $GITHUB_REPOSITORY | tr '[A-Z]' '[a-z]')/test-driven-client:prod
+  CLIENT: docker.pkg.github.com/$(echo $GITHUB_REPOSITORY | tr '[A-Z]' '[a-z]')/test-driven-client
   REACT_APP_API_SERVICE_URL: "http://localhost:5004"
 
 jobs:
