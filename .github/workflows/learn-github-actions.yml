@@ -45,7 +45,7 @@ jobs:
             --target builder \
             --cache-from ${{ env.CLIENT }}:builder \
             --file services/client/Dockerfile.prod \
-            --tag ${{ env.CLIENT }}:prod \
+            --tag ${{ env.CLIENT }}:builder \
             --build-arg NODE_ENV=production \
             --build-arg REACT_APP_API_SERVICE_URL=${{ env.REACT_APP_API_SERVICE_URL }} \
             "./services/client"
