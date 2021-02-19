@@ -1,134 +1,48 @@
 {
-"ipcMode": null,
-"executionRoleArn": "arn:aws:iam::595277504214:role/ecsExecutionRoleGitHubPackages",
-"containerDefinitions": [
-    {
-    "dnsSearchDomains": null,
-    "environmentFiles": null,
-    "logConfiguration": {
-        "logDriver": "awslogs",
-        "secretOptions": null,
-        "options": {
-        "awslogs-group": "flask-react-users-log",
-        "awslogs-region": "us-east-1"
+    "executionRoleArn": "arn:aws:iam::595277504214:role/ecsExecutionRoleGitHubPackages",
+    "containerDefinitions": [
+      {
+        "name": "users",
+        "image": "docker.pkg.github.com/nessadc/flask-react-aws/test-driven-users:prod",
+        "essential": true,
+        "memoryReservation": 300,
+        "portMappings": [
+          {
+            "hostPort": 0,
+            "protocol": "tcp",
+            "containerPort": 5000
+          }
+        ],
+        "environment": [
+          {
+            "name": "APP_SETTINGS",
+            "value": "src.config.ProductionConfig"
+          },
+          {
+            "name": "DATABASE_TEST_URL",
+            "value": "postgres://postgres:postgres@api-db:5432/api_test"
+          },
+          {
+            "name": "DATABASE_URL",
+            "value": "%s"
+          },
+          {
+            "name": "SECRET_KEY",
+            "value": "%s"
+          }
+        ],
+        "repositoryCredentials": {
+          "credentialsParameter": "arn:aws:secretsmanager:us-east-1:595277504214:secret:github_packages-r7cp9Y"
+        },
+        "logConfiguration": {
+          "logDriver": "awslogs",
+          "options": {
+            "awslogs-group": "flask-react-users-log",
+            "awslogs-region": "us-east-1"
+          }
         }
-    },
-    "entryPoint": null,
-    "portMappings": [
-        {
-        "hostPort": 0,
-        "protocol": "tcp",
-        "containerPort": 5000
-        }
+      }
     ],
-    "command": null,
-    "linuxParameters": null,
-    "cpu": 0,
-    "environment": [
-        {
-        "name": "APP_SETTINGS",
-        "value": "src.config.ProductionConfig"
-        },
-        {
-        "name": "DATABASE_TEST_URL",
-        "value": "postgres://postgres:postgres@api-db:5432/api_test"
-        },
-        {
-        "name": "DATABASE_URL",
-        "value": "postgres://webapp:GyfGGZy4Il0A3NvIH3Hw@flask-react-db.ctffmwo1n6aa.us-east-1.rds.amazonaws.com:5432/api_prod"
-        },
-        {
-        "name": "FLASK_ENV",
-        "value": "production"
-        },
-        {
-        "name": "SECRET_KEY",
-        "value": "Q8iBdM6dcQ6aU8rqaYBrUfBrptfWg8z9ChwDbF3uo4XWxUKVRJ"
-        }
-    ],
-    "resourceRequirements": null,
-    "ulimits": null,
-    "repositoryCredentials": {
-        "credentialsParameter": "arn:aws:secretsmanager:us-east-1:595277504214:secret:github_packages-r7cp9Y"
-    },
-    "dnsServers": null,
-    "mountPoints": [],
-    "workingDirectory": null,
-    "secrets": null,
-    "dockerSecurityOptions": null,
-    "memory": null,
-    "memoryReservation": 300,
-    "volumesFrom": [],
-    "stopTimeout": null,
-    "image": "docker.pkg.github.com/nessadc/flask-react-aws/test-driven-users:prod",
-    "startTimeout": null,
-    "firelensConfiguration": null,
-    "dependsOn": null,
-    "disableNetworking": null,
-    "interactive": null,
-    "healthCheck": null,
-    "essential": true,
-    "links": null,
-    "hostname": null,
-    "extraHosts": null,
-    "pseudoTerminal": null,
-    "user": null,
-    "readonlyRootFilesystem": null,
-    "dockerLabels": null,
-    "systemControls": null,
-    "privileged": null,
-    "name": "users"
-    }
-],
-"placementConstraints": [],
-"memory": null,
-"taskRoleArn": null,
-"compatibilities": [
-    "EC2"
-],
-"taskDefinitionArn": "arn:aws:ecs:us-east-1:595277504214:task-definition/flask-react-users-td:3",
-"family": "flask-react-users-td",
-"requiresAttributes": [
-    {
-    "targetId": null,
-    "targetType": null,
-    "value": null,
-    "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
-    },
-    {
-    "targetId": null,
-    "targetType": null,
-    "value": null,
-    "name": "ecs.capability.execution-role-awslogs"
-    },
-    {
-    "targetId": null,
-    "targetType": null,
-    "value": null,
-    "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
-    },
-    {
-    "targetId": null,
-    "targetType": null,
-    "value": null,
-    "name": "ecs.capability.private-registry-authentication.secretsmanager"
-    },
-    {
-    "targetId": null,
-    "targetType": null,
-    "value": null,
-    "name": "com.amazonaws.ecs.capability.docker-remote-api.1.21"
-    }
-],
-"pidMode": null,
-"requiresCompatibilities": [
-    "EC2"
-],
-"networkMode": null,
-"cpu": null,
-"revision": 3,
-"status": "ACTIVE",
-"inferenceAccelerators": null,
-"proxyConfiguration": null,
-"volumes": []
-}
+    "family": "flask-react-users-td"
+  }
+  
