@@ -1,0 +1,30 @@
+{
+    "executionRoleArn": "arn:aws:iam::595277504214:role/ecsExecutionRoleGitHubPackages",
+    "containerDefinitions": [
+        {
+            "name": "client",
+            "essential": true,
+            "memoryReservation": 300,
+            "portMappings": [
+                {
+                "hostPort": 0,
+                "protocol": "tcp",
+                "containerPort": 80
+                }
+            ],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                "awslogs-group": "flask-react-client-log",
+                "awslogs-region": "us-east-1"
+                }
+            },
+            "repositoryCredentials": {
+                "credentialsParameter": "arn:aws:secretsmanager:us-east-1:595277504214:secret:github_packages-r7cp9Y"
+            },
+            "image": "docker.pkg.github.com/nessadc/flask-react-aws/test-driven-client:prod"
+        }
+    ],
+    "family": "flask-react-client-td"
+}
+
