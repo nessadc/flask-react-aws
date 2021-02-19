@@ -41,7 +41,8 @@ jobs:
           echo "Building prod images..."
           docker build \
             --cache-from ${{ env.USERS }} \
-            --file services/users/Dockerfile.prod \ --tag ${{ env.USERS }} \ "./services/users"
+            --file services/users/Dockerfile.prod \ --tag ${{ env.USERS }} \ 
+            "./services/users"
           docker build \
             --target builder \
             --cache-from ${{ env.CLIENT }}:builder \
