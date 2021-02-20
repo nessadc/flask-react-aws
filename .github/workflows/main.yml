@@ -55,6 +55,7 @@ jobs:
           docker pull ${{ env.CLIENT }}:builder || true
           docker pull ${{ env.CLIENT }}:prod || true
       - name: Build prod images
+        run: |
           echo "Building prod images..."
           docker build \
             --cache-from ${{ env.USERS }} \
