@@ -12,7 +12,7 @@ env:
 jobs:
   
   build:
-    name: Build Docker Images
+    name: Build & Test Dev Images
     runs-on: ubuntu-latest
     steps:
       - name: Checkout master
@@ -37,6 +37,24 @@ jobs:
           docker-compose exec -T client npm run lint
           docker-compose exec -T client npm run prettier:check
           docker-compose exec -T client npm run prettier:write
+
+
+  build_prod:
+    name: Build & Push Prod Images
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout master
+        uses: actions/checkout@v2.3.4
+      - name: Log in to GitHub Packages
+        run: echo ${GITHUB_TOKEN} | docker login -u ${GITHUB_ACTOR} --password-stdin docker.pkg.github.com
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Pull Images
+        run: |
+          docker pull ${{ env.USERS }} || true
+          docker pull ${{ env.CLIENT }}:builder || true
+          docker pull ${{ env.CLIENT }}:prod || true
+      - name: Build prod images
           echo "Building prod images..."
           docker build \
             --cache-from ${{ env.USERS }} \
@@ -56,12 +74,20 @@ jobs:
             --file services/client/Dockerfile.prod \
             --tag ${{ env.CLIENT }}:prod \
             "./services/client"
-      - name: Push Images
+      - name: Push Prod Images
         run: |
           echo "Pushing prod images to GitHub Packages..."
           docker push ${{ env.USERS }}
           docker push ${{ env.CLIENT }}:builder
           docker push ${{ env.CLIENT }}:prod
+
+
+  deploy:
+    name: Deploy to prod 
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout master
+        uses: actions/checkout@v2.3.4
       - name: Update task definitions in ECS
         run: |
           chmod +x ./deploy.sh
@@ -71,3 +97,4 @@ jobs:
           PRODUCTION_SECRET_KEY: ${{ env.PRODUCTION_SECRET_KEY }}
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        if: github.ref == 'refs/heads/main'
