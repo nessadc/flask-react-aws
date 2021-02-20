@@ -49,7 +49,7 @@ deploy_cluster() {
 
 }
 
-if [ "$GITHUB_REF" == "refs/heads/main" ] then
+if [ "$GITHUB_REF" == "refs/heads/main" ]; then
   echo "Updating ECS."
   configure_aws_cli
   deploy_cluster
