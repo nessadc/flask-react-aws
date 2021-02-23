@@ -60,24 +60,27 @@ jobs:
         run: echo ${GITHUB_TOKEN} | docker login -u ${GITHUB_ACTOR} --password-stdin docker.pkg.github.com
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Pull Images
+      - name: Set DOCKER_TAG environment variable
         run: |
           if expr ${GITHUB_REF} == "refs/heads/main" >/dev/null; then
-            DOCKER_TAG=prod
+            DT=prod
           else
-            DOCKER_TAG=${GITHUB_SHA}
+            DT=${GITHUB_SHA}
           fi
-          echo "Docker tag:" $DOCKER_TAG
-          docker pull ${{ env.USERS }}:$DOCKER_TAG || true
+          echo "DOCKER_TAG=$DT" >> $GITHUB_ENV
+      - name: Pull Images
+        run: |
+          echo "Docker tag:" ${{ env.DOCKER_TAG }}
+          docker pull ${{ env.USERS }}:${{ env.DOCKER_TAG }} || true
           docker pull ${{ env.CLIENT }}:builder || true
-          docker pull ${{ env.CLIENT }}:$DOCKER_TAG || true
+          docker pull ${{ env.CLIENT }}:${{ env.DOCKER_TAG }} || true
       - name: Build prod images
         run: |
           echo "Building prod images..."
           docker build \
-            --cache-from ${{ env.USERS }}:$DOCKER_TAG \
+            --cache-from ${{ env.USERS }}:${{ env.DOCKER_TAG }} \
             --file services/users/Dockerfile.prod \
-            --tag ${{ env.USERS }}:$DOCKER_TAG \
+            --tag ${{ env.USERS }}:${{ env.DOCKER_TAG }} \
             "./services/users"
           docker build \
             --target builder \
@@ -88,16 +91,16 @@ jobs:
             --build-arg REACT_APP_API_SERVICE_URL=${{ env.REACT_APP_API_SERVICE_URL }} \
             "./services/client"
           docker build \
-            --cache-from ${{ env.CLIENT }}:$DOCKER_TAG \
+            --cache-from ${{ env.CLIENT }}:${{ env.DOCKER_TAG }} \
             --file services/client/Dockerfile.prod \
-            --tag ${{ env.CLIENT }}:$DOCKER_TAG \
+            --tag ${{ env.CLIENT }}:${{ env.DOCKER_TAG }} \
             "./services/client"
       - name: Push Prod Images
         run: |
           echo "Pushing prod images to GitHub Packages..."
-          docker push ${{ env.USERS }}:$DOCKER_TAG
+          docker push ${{ env.USERS }}:${{ env.DOCKER_TAG }}
           docker push ${{ env.CLIENT }}:builder
-          docker push ${{ env.CLIENT }}:$DOCKER_TAG
+          docker push ${{ env.CLIENT }}:${{ env.DOCKER_TAG }}
 
 
   deploy:
