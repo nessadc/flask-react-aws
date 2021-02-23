@@ -7,7 +7,7 @@ on:
       - dev
 
 env:
-  USERS: docker.pkg.github.com/$(echo $GITHUB_REPOSITORY | tr '[A-Z]' '[a-z]')/test-driven-users:prod
+  USERS: docker.pkg.github.com/$(echo $GITHUB_REPOSITORY | tr '[A-Z]' '[a-z]')/test-driven-users
   CLIENT: docker.pkg.github.com/$(echo $GITHUB_REPOSITORY | tr '[A-Z]' '[a-z]')/test-driven-client
   REACT_APP_API_SERVICE_URL: "http://flask-react-alb-2036598675.us-east-1.elb.amazonaws.com"
   AWS_RDS_URI: "postgres://webapp:GyfGGZy4Il0A3NvIH3Hw@flask-react-db.ctffmwo1n6aa.us-east-1.rds.amazonaws.com:5432/api_prod" 
@@ -27,9 +27,15 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Pull Images
         run: |
-          docker pull ${{ env.USERS }} || true
+          if expr ${GITHUB_REF} == "refs/heads/main" >/dev/null; then
+            DOCKER_TAG=prod
+          else
+            DOCKER_TAG=${GITHUB_SHA}
+          fi
+          echo "Docker tag:" $DOCKER_TAG
+          docker pull ${{ env.USERS }}:$DOCKER_TAG || true
           docker pull ${{ env.CLIENT }}:builder || true
-          docker pull ${{ env.CLIENT }}:prod || true
+          docker pull ${{ env.CLIENT }}:$DOCKER_TAG || true
       - name: Build Images
         run: |
           echo "Building and testing dev images.."
@@ -56,16 +62,22 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Pull Images
         run: |
-          docker pull ${{ env.USERS }} || true
+          if expr ${GITHUB_REF} == "refs/heads/main" >/dev/null; then
+            DOCKER_TAG=prod
+          else
+            DOCKER_TAG=${GITHUB_SHA}
+          fi
+          echo "Docker tag:" $DOCKER_TAG
+          docker pull ${{ env.USERS }}:$DOCKER_TAG || true
           docker pull ${{ env.CLIENT }}:builder || true
-          docker pull ${{ env.CLIENT }}:prod || true
+          docker pull ${{ env.CLIENT }}:$DOCKER_TAG || true
       - name: Build prod images
         run: |
           echo "Building prod images..."
           docker build \
-            --cache-from ${{ env.USERS }} \
+            --cache-from ${{ env.USERS }}:$DOCKER_TAG \
             --file services/users/Dockerfile.prod \
-            --tag ${{ env.USERS }} \
+            --tag ${{ env.USERS }}:$DOCKER_TAG \
             "./services/users"
           docker build \
             --target builder \
@@ -76,16 +88,16 @@ jobs:
             --build-arg REACT_APP_API_SERVICE_URL=${{ env.REACT_APP_API_SERVICE_URL }} \
             "./services/client"
           docker build \
-            --cache-from ${{ env.CLIENT }}:prod \
+            --cache-from ${{ env.CLIENT }}:$DOCKER_TAG \
             --file services/client/Dockerfile.prod \
-            --tag ${{ env.CLIENT }}:prod \
+            --tag ${{ env.CLIENT }}:$DOCKER_TAG \
             "./services/client"
       - name: Push Prod Images
         run: |
           echo "Pushing prod images to GitHub Packages..."
-          docker push ${{ env.USERS }}
+          docker push ${{ env.USERS }}:$DOCKER_TAG
           docker push ${{ env.CLIENT }}:builder
-          docker push ${{ env.CLIENT }}:prod
+          docker push ${{ env.CLIENT }}:$DOCKER_TAG
 
 
   deploy:
