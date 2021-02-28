@@ -9,9 +9,7 @@ on:
 env:
   USERS: docker.pkg.github.com/$(echo $GITHUB_REPOSITORY | tr '[A-Z]' '[a-z]')/test-driven-users
   CLIENT: docker.pkg.github.com/$(echo $GITHUB_REPOSITORY | tr '[A-Z]' '[a-z]')/test-driven-client
-  REACT_APP_API_SERVICE_URL: "http://flask-react-alb-2036598675.us-east-1.elb.amazonaws.com"
-  AWS_RDS_URI: "postgres://webapp:GyfGGZy4Il0A3NvIH3Hw@flask-react-db.ctffmwo1n6aa.us-east-1.rds.amazonaws.com:5432/api_prod" 
-  PRODUCTION_SECRET_KEY: "3542523a19ae1bd634ad6b2788e94071e7c7368615bfe8d0"
+  REACT_APP_API_SERVICE_URL: "http://flask-react-aws-alb-1764984278.us-east-1.elb.amazonaws.com"
 
 jobs:
   
@@ -110,13 +108,46 @@ jobs:
     steps:
       - name: Checkout master
         uses: actions/checkout@v2.3.4
-      - name: Update task definitions in ECS
-        run: |
-          chmod +x ./deploy.sh
-          ./deploy.sh
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+            cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+      - name: Terraform Format
+        id: fmt
+        run: terraform fmt -check
+      - name: Terraform Init 
+        id: init
+        run: terraform init
+      - name: Terraform Plan 
+        id: plan
+        if: github.event_name == 'pull_request'
+        run: terraform plan -no-color
+        continue-on-error: true
+      - name: Update Pull Request
+        uses: actions/github-script@0.9.0
+        if: github.event_name == 'pull_request'
         env:
-          AWS_RDS_URI: ${{ env.AWS_RDS_URI }}
-          PRODUCTION_SECRET_KEY: ${{ env.PRODUCTION_SECRET_KEY }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        if: github.ref == 'refs/heads/main'
+          PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+            #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+            #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+            <details><summary>Show Plan</summary>
+            \`\`\`${process.env.PLAN}\`\`\`
+            </details>
+            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+      - name: Terraform Plan Status
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform apply -auto-approve
