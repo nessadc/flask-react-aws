@@ -46,7 +46,7 @@ variable "rds_username" {
 }
 variable "rds_password" {
   description = "RDS database password"
-  default = "foobarbaz"
+  default     = "foobarbaz"
 }
 variable "rds_instance_class" {
   description = "RDS instance type"
