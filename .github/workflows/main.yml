@@ -2,10 +2,10 @@ name: Continuous Integration and Delivery
 
 on: 
   push:
-    branches:
+  pull_request:
+    branches: 
       - main
       - dev
-  pull_request:
 
 env:
   USERS: docker.pkg.github.com/$(echo $GITHUB_REPOSITORY | tr '[A-Z]' '[a-z]')/test-driven-users
@@ -14,98 +14,98 @@ env:
 
 jobs:
   
-  # build_and_test:
-  #   name: Build & Test Dev Images
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout master
-  #       uses: actions/checkout@v2.3.4
-  #     - name: Log in to GitHub Packages
-  #       run: echo ${GITHUB_TOKEN} | docker login -u ${GITHUB_ACTOR} --password-stdin docker.pkg.github.com
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #     - name: Pull Images
-  #       run: |
-  #         if expr ${GITHUB_REF} == "refs/heads/main" >/dev/null; then
-  #           DOCKER_TAG=prod
-  #         else
-  #           DOCKER_TAG=${GITHUB_SHA}
-  #         fi
-  #         echo "Docker tag:" $DOCKER_TAG
-  #         docker pull ${{ env.USERS }}:$DOCKER_TAG || true
-  #         docker pull ${{ env.CLIENT }}:builder || true
-  #         docker pull ${{ env.CLIENT }}:$DOCKER_TAG || true
-  #     - name: Build Images
-  #       run: |
-  #         echo "Building and testing dev images.."
-  #         docker-compose up --detach --build
-  #         docker-compose exec -T api python -m pytest "src/tests" -p no:warnings --cov="src"
-  #         docker-compose exec -T api flake8 src
-  #         docker-compose exec -T api black src --check
-  #         docker-compose exec -T api isort src --check-only
-  #         docker-compose exec -T client npm run lint
-  #         docker-compose exec -T client npm run prettier:check
-  #         docker-compose exec -T client npm run prettier:write
+  build_and_test:
+    name: Build & Test Dev Images
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout master
+        uses: actions/checkout@v2.3.4
+      - name: Log in to GitHub Packages
+        run: echo ${GITHUB_TOKEN} | docker login -u ${GITHUB_ACTOR} --password-stdin docker.pkg.github.com
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Pull Images
+        run: |
+          if expr ${GITHUB_REF} == "refs/heads/main" >/dev/null; then
+            DOCKER_TAG=prod
+          else
+            DOCKER_TAG=${GITHUB_SHA}
+          fi
+          echo "Docker tag:" $DOCKER_TAG
+          docker pull ${{ env.USERS }}:$DOCKER_TAG || true
+          docker pull ${{ env.CLIENT }}:builder || true
+          docker pull ${{ env.CLIENT }}:$DOCKER_TAG || true
+      - name: Build Images
+        run: |
+          echo "Building and testing dev images.."
+          docker-compose up --detach --build
+          docker-compose exec -T api python -m pytest "src/tests" -p no:warnings --cov="src"
+          docker-compose exec -T api flake8 src
+          docker-compose exec -T api black src --check
+          docker-compose exec -T api isort src --check-only
+          docker-compose exec -T client npm run lint
+          docker-compose exec -T client npm run prettier:check
+          docker-compose exec -T client npm run prettier:write
 
 
-  # build_prod:
-  #   name: Build & Push Prod Images
-  #   needs: build_and_test
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout master
-  #       uses: actions/checkout@v2.3.4
-  #     - name: Log in to GitHub Packages
-  #       run: echo ${GITHUB_TOKEN} | docker login -u ${GITHUB_ACTOR} --password-stdin docker.pkg.github.com
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #     - name: Set DOCKER_TAG environment variable
-  #       run: |
-  #         if expr ${GITHUB_REF} == "refs/heads/main" >/dev/null; then
-  #           DT=prod
-  #         else
-  #           DT=${GITHUB_SHA}
-  #         fi
-  #         echo "DOCKER_TAG=$DT" >> $GITHUB_ENV
-  #     - name: Pull Images
-  #       run: |
-  #         echo "Docker tag:" ${{ env.DOCKER_TAG }}
-  #         docker pull ${{ env.USERS }}:${{ env.DOCKER_TAG }} || true
-  #         docker pull ${{ env.CLIENT }}:builder || true
-  #         docker pull ${{ env.CLIENT }}:${{ env.DOCKER_TAG }} || true
-  #     - name: Build prod images
-  #       run: |
-  #         echo "Building prod images..."
-  #         docker build \
-  #           --cache-from ${{ env.USERS }}:${{ env.DOCKER_TAG }} \
-  #           --file services/users/Dockerfile.prod \
-  #           --tag ${{ env.USERS }}:${{ env.DOCKER_TAG }} \
-  #           "./services/users"
-  #         docker build \
-  #           --target builder \
-  #           --cache-from ${{ env.CLIENT }}:builder \
-  #           --file services/client/Dockerfile.prod \
-  #           --tag ${{ env.CLIENT }}:builder \
-  #           --build-arg NODE_ENV=production \
-  #           --build-arg REACT_APP_API_SERVICE_URL=${{ env.REACT_APP_API_SERVICE_URL }} \
-  #           "./services/client"
-  #         docker build \
-  #           --cache-from ${{ env.CLIENT }}:${{ env.DOCKER_TAG }} \
-  #           --file services/client/Dockerfile.prod \
-  #           --tag ${{ env.CLIENT }}:${{ env.DOCKER_TAG }} \
-  #           "./services/client"
-  #     - name: Push Prod Images
-  #       run: |
-  #         echo "Pushing prod images to GitHub Packages..."
-  #         docker push ${{ env.USERS }}:${{ env.DOCKER_TAG }}
-  #         docker push ${{ env.CLIENT }}:builder
-  #         docker push ${{ env.CLIENT }}:${{ env.DOCKER_TAG }}
+  build_prod:
+    name: Build & Push Prod Images
+    needs: build_and_test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout master
+        uses: actions/checkout@v2.3.4
+      - name: Log in to GitHub Packages
+        run: echo ${GITHUB_TOKEN} | docker login -u ${GITHUB_ACTOR} --password-stdin docker.pkg.github.com
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set DOCKER_TAG environment variable
+        run: |
+          if expr ${GITHUB_REF} == "refs/heads/main" >/dev/null; then
+            DT=prod
+          else
+            DT=${GITHUB_SHA}
+          fi
+          echo "DOCKER_TAG=$DT" >> $GITHUB_ENV
+      - name: Pull Images
+        run: |
+          echo "Docker tag:" ${{ env.DOCKER_TAG }}
+          docker pull ${{ env.USERS }}:${{ env.DOCKER_TAG }} || true
+          docker pull ${{ env.CLIENT }}:builder || true
+          docker pull ${{ env.CLIENT }}:${{ env.DOCKER_TAG }} || true
+      - name: Build prod images
+        run: |
+          echo "Building prod images..."
+          docker build \
+            --cache-from ${{ env.USERS }}:${{ env.DOCKER_TAG }} \
+            --file services/users/Dockerfile.prod \
+            --tag ${{ env.USERS }}:${{ env.DOCKER_TAG }} \
+            "./services/users"
+          docker build \
+            --target builder \
+            --cache-from ${{ env.CLIENT }}:builder \
+            --file services/client/Dockerfile.prod \
+            --tag ${{ env.CLIENT }}:builder \
+            --build-arg NODE_ENV=production \
+            --build-arg REACT_APP_API_SERVICE_URL=${{ env.REACT_APP_API_SERVICE_URL }} \
+            "./services/client"
+          docker build \
+            --cache-from ${{ env.CLIENT }}:${{ env.DOCKER_TAG }} \
+            --file services/client/Dockerfile.prod \
+            --tag ${{ env.CLIENT }}:${{ env.DOCKER_TAG }} \
+            "./services/client"
+      - name: Push Prod Images
+        run: |
+          echo "Pushing prod images to GitHub Packages..."
+          docker push ${{ env.USERS }}:${{ env.DOCKER_TAG }}
+          docker push ${{ env.CLIENT }}:builder
+          docker push ${{ env.CLIENT }}:${{ env.DOCKER_TAG }}
 
 
   deploy:
     name: Deploy to prod
     runs-on: ubuntu-latest
-    # needs: [build_and_test, build_prod]
+    needs: [build_and_test, build_prod]
     steps:
       - name: Checkout master
         uses: actions/checkout@v2.3.4

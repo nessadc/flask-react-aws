@@ -31,7 +31,7 @@ class App extends Component {
 
     this.state = {
       users: [],
-      title: "MovieApp.io",
+      title: "FlaskApp.io",
       accessToken: null,
       messageType: null,
       messageText: null,
