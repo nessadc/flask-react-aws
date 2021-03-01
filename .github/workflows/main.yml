@@ -105,6 +105,8 @@ jobs:
     name: Deploy to prod
     runs-on: ubuntu-latest
     needs: [build_and_test, build_prod]
+    env:
+      TF_VAR_rds_password: foobarbaz
     steps:
       - name: Checkout master
         uses: actions/checkout@v2.3.4
