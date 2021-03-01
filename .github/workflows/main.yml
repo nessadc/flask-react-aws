@@ -2,10 +2,10 @@ name: Continuous Integration and Delivery
 
 on: 
   push:
-    branches:
+  pull_request:
+    branches: 
       - main
       - dev
-  pull_request:
 
 env:
   USERS: docker.pkg.github.com/$(echo $GITHUB_REPOSITORY | tr '[A-Z]' '[a-z]')/test-driven-users
@@ -105,7 +105,7 @@ jobs:
   deploy:
     name: Deploy to prod
     runs-on: ubuntu-latest
-    # needs: [build_and_test, build_prod]
+    needs: [build_and_test, build_prod]
     steps:
       - name: Checkout master
         uses: actions/checkout@v2.3.4
