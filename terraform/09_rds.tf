@@ -14,7 +14,7 @@ resource "aws_db_instance" "production" {
   instance_class          = var.rds_instance_class
   allocated_storage       = "20"
   storage_encrypted       = false
-  vpc_security_group_ids  = [data.terraform_remote_state.prod.outputs.ecs_security_group]
+  vpc_security_group_ids  = [data.terraform_remote_state.prod.outputs.rds_security_group]
   db_subnet_group_name    = aws_db_subnet_group.production.name
   multi_az                = false
   storage_type            = "gp2"
