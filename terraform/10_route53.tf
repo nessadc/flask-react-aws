@@ -9,8 +9,8 @@ resource "aws_route53_record" "flask-aws-record" {
   type    = "A"
 
   alias {
-    name                   = data.terraform_remote_state.prod.outputs.dns_name
-    zone_id                = data.terraform_remote_state.prod.outputs.zone_id
+    name                   = data.terraform_remote_state.prod.outputs.alb_hostname
+    zone_id                = data.terraform_remote_state.prod.outputs.alb_zoneid
     evaluate_target_health = true
   }
 }
