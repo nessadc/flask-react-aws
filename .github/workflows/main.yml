@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - dev
+  pull_request:
 
 env:
   USERS: docker.pkg.github.com/$(echo $GITHUB_REPOSITORY | tr '[A-Z]' '[a-z]')/test-driven-users
