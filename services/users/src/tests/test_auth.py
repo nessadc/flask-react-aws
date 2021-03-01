@@ -48,9 +48,9 @@ def test_user_registration_duplicate_email(test_app, test_database, add_user):
     "payload",
     [
         {},
-        {"email": "me@MovieApp.io", "password": "greaterthanten"},
+        {"email": "me@FlaskApp.io", "password": "greaterthanten"},
         {"username": "michael", "password": "greaterthanten"},
-        {"email": "me@MovieApp.io", "username": "michael"},
+        {"email": "me@FlaskApp.io", "username": "michael"},
     ],
 )
 def test_user_registration_invalid_json(test_app, test_database, payload):
